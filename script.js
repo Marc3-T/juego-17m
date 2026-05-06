@@ -16,30 +16,25 @@ document.getElementById('boton-reiniciar').addEventListener('click', reiniciarJu
 // Variables del juego
 let ancho, alto;
 let escala;
-const ANCHO_REF = 375; // iPhone 6/7/8 lógico
+const ANCHO_REF = 375;
 
-// Pájaro (corazón) - FÍSICA AJUSTADA
 let pajaro = {
     x: 0,
     y: 0,
     vy: 0,
-    radio: 15,          // tamaño base
-    gravedad: 0.6,      // caída ágil
-    salto: -5.5         // impulso de aleteo
+    radio: 15,
+    gravedad: 0.6,
+    salto: -5.5
 };
 
-// Obstáculos (columnas rosadas) - ESPACIO AUMENTADO UN 50%
 let obstaculos = [];
-const VELOCIDAD_BASE = 3.5;       // movimiento rápido
-const ESPACIO_VERTICAL = 100;     // antes 140 → +50% = 210
-const DISTANCIA_HORIZONTAL = 280; // distancia entre pares
+const VELOCIDAD_BASE = 3.5;
+const ESPACIO_VERTICAL = 210;
+const DISTANCIA_HORIZONTAL = 250;
 
 let puntuacion = 0;
 let jugando = false;
 let animacionId = null;
-
-// Control de audio
-
 
 // ===================== FUNCIONES DE DIBUJO =====================
 function dibujarCorazon(x, y, radio, rotacion = 0) {
@@ -50,8 +45,7 @@ function dibujarCorazon(x, y, radio, rotacion = 0) {
     ctx.shadowColor = 'rgba(0,0,0,0.3)';
     ctx.shadowBlur = 5;
     ctx.beginPath();
-    // Corazón escalado
-    const s = radio / 15; // radio base de 15 píxeles
+    const s = radio / 15;
     ctx.moveTo(0, -5 * s);
     ctx.bezierCurveTo(-5 * s, -15 * s, -15 * s, -10 * s, 0, 5 * s);
     ctx.bezierCurveTo(15 * s, -10 * s, 5 * s, -15 * s, 0, -5 * s);
@@ -60,14 +54,11 @@ function dibujarCorazon(x, y, radio, rotacion = 0) {
 }
 
 function dibujarColumna(x, y, ancho, alto) {
-    // Columna rosa con bordes suaves (sin número)
-    const radio = 10 * escala; // radio para esquinas redondeadas
-    ctx.fillStyle = '#ff8da1'; // rosa pastel
+    const radio = 10 * escala;
+    ctx.fillStyle = '#ff8da1';
     ctx.shadowColor = 'rgba(0,0,0,0.2)';
     ctx.shadowBlur = 8;
-    
     ctx.beginPath();
-    // Rectángulo redondeado
     ctx.moveTo(x + radio, y);
     ctx.lineTo(x + ancho - radio, y);
     ctx.quadraticCurveTo(x + ancho, y, x + ancho, y + radio);
@@ -79,8 +70,6 @@ function dibujarColumna(x, y, ancho, alto) {
     ctx.quadraticCurveTo(x, y, x + radio, y);
     ctx.closePath();
     ctx.fill();
-    
-    // Sin texto del 17
     ctx.shadowBlur = 0;
 }
 
@@ -95,31 +84,20 @@ function reiniciarValores() {
 function crearObstaculo() {
     const anchoColumna = 45 * escala;
     const espacio = ESPACIO_VERTICAL * escala;
-    
-    // Posición vertical aleatoria del centro del espacio
     const centroY = Math.random() * (alto - espacio - 80 * escala) + 40 * escala;
-    
     obstaculos.push({
         x: ancho,
-        sup: {
-            y: 0,
-            alto: centroY - espacio/2   // columna superior
-        },
-        inf: {
-            y: centroY + espacio/2,
-            alto: alto - (centroY + espacio/2) // columna inferior
-        },
+        sup: { y: 0, alto: centroY - espacio/2 },
+        inf: { y: centroY + espacio/2, alto: alto - (centroY + espacio/2) },
         ancho: anchoColumna,
         pasada: false
     });
 }
 
 function actualizar() {
-    // Física del pájaro
     pajaro.vy += pajaro.gravedad * escala;
     pajaro.y += pajaro.vy;
     
-    // Límites verticales (suelo y techo)
     if (pajaro.y + pajaro.radio * escala > alto) {
         pajaro.y = alto - pajaro.radio * escala;
         gameOver();
@@ -130,38 +108,30 @@ function actualizar() {
         pajaro.vy = 0;
     }
     
-    // Mover obstáculos
     for (let i = obstaculos.length - 1; i >= 0; i--) {
         const obs = obstaculos[i];
         obs.x -= VELOCIDAD_BASE * escala;
         
-        // Eliminar los que salen de la pantalla
         if (obs.x + obs.ancho < 0) {
             obstaculos.splice(i, 1);
             continue;
         }
         
-        // Detectar paso del obstáculo (puntuación)
         if (!obs.pasada && obs.x + obs.ancho < pajaro.x) {
             obs.pasada = true;
             puntuacion++;
-            
-            
-            // ¿Ganó?
             if (puntuacion >= 17) {
                 ganarJuego();
                 return;
             }
         }
         
-        // Colisión con las columnas
         if (hayColision(obs)) {
             gameOver();
             return;
         }
     }
     
-    // Generar nuevos obstáculos
     if (obstaculos.length === 0 || obstaculos[obstaculos.length-1].x < ancho - DISTANCIA_HORIZONTAL * escala) {
         crearObstaculo();
     }
@@ -170,26 +140,16 @@ function actualizar() {
 function hayColision(obs) {
     const pjarox = pajaro.x;
     const pjaroy = pajaro.y;
-    const radio = pajaro.radio * escala * 0.75; // margen de colisión generoso
-    
-    // El pájaro está dentro del rango horizontal de la columna
+    const radio = pajaro.radio * escala * 0.75;
     if (pjarox + radio > obs.x && pjarox - radio < obs.x + obs.ancho) {
-        // Colisión con columna superior
-        if (pjaroy - radio < obs.sup.alto) {
-            return true;
-        }
-        // Colisión con columna inferior
-        if (pjaroy + radio > alto - obs.inf.alto) {
-            return true;
-        }
+        if (pjaroy - radio < obs.sup.alto) return true;
+        if (pjaroy + radio > alto - obs.inf.alto) return true;
     }
     return false;
 }
 
 function dibujarTodo() {
     ctx.clearRect(0, 0, ancho, alto);
-    
-    // Nubes decorativas de fondo (opcionales)
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     for (let i = 0; i < 5; i++) {
         ctx.beginPath();
@@ -197,18 +157,12 @@ function dibujarTodo() {
         ctx.arc(i * 100 * escala + 60 * escala, 40 * escala, 20 * escala, 0, Math.PI*2);
         ctx.fill();
     }
-    
-    // Dibujar columnas rosadas
     obstaculos.forEach(obs => {
-        dibujarColumna(obs.x, 0, obs.ancho, obs.sup.alto);                // superior
-        dibujarColumna(obs.x, alto - obs.inf.alto, obs.ancho, obs.inf.alto); // inferior
+        dibujarColumna(obs.x, 0, obs.ancho, obs.sup.alto);
+        dibujarColumna(obs.x, alto - obs.inf.alto, obs.ancho, obs.inf.alto);
     });
-    
-    // Rotación del corazón según velocidad vertical
     const rotacion = Math.min(Math.max(pajaro.vy * 0.1, -0.5), 0.5);
     dibujarCorazon(pajaro.x, pajaro.y, pajaro.radio * escala, rotacion);
-    
-    // Marcador
     ctx.fillStyle = 'white';
     ctx.font = `${28*escala}px "Pacifico", cursive`;
     ctx.textAlign = 'center';
@@ -221,7 +175,6 @@ function dibujarTodo() {
 // ===================== CONTROL DE JUEGO =====================
 function loop() {
     if (!jugando) return;
-    
     actualizar();
     dibujarTodo();
     animacionId = requestAnimationFrame(loop);
@@ -230,17 +183,13 @@ function loop() {
 function saltar() {
     if (!jugando) return;
     pajaro.vy = pajaro.salto * escala;
-    
 }
 
-// Eventos táctiles y de ratón
 canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
     saltar();
 });
 canvas.addEventListener('mousedown', saltar);
-
-// Tecla espacio para depurar en PC
 document.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
         e.preventDefault();
@@ -252,10 +201,6 @@ document.addEventListener('keydown', (e) => {
 function iniciarJuego() {
     inicio.classList.add('oculto');
     canvas.classList.remove('oculto');
-    
-    // Activar contexto de audio con interacción
-    
-    
     redimensionarCanvas();
     reiniciarValores();
     jugando = true;
@@ -266,7 +211,6 @@ function reiniciarJuego() {
     perdiste.classList.add('oculto');
     ganaste.classList.add('oculto');
     canvas.classList.remove('oculto');
-    
     redimensionarCanvas();
     reiniciarValores();
     jugando = true;
@@ -276,8 +220,6 @@ function reiniciarJuego() {
 function gameOver() {
     jugando = false;
     cancelAnimationFrame(animacionId);
-    
-    
     canvas.classList.add('oculto');
     perdiste.classList.remove('oculto');
 }
@@ -285,18 +227,13 @@ function gameOver() {
 function ganarJuego() {
     jugando = false;
     cancelAnimationFrame(animacionId);
-    
-    // Confeti
     confetti({
         particleCount: 150,
         spread: 100,
         origin: { y: 0.6 }
     });
-    
     canvas.classList.add('oculto');
     ganaste.classList.remove('oculto');
-    
-    // Mensaje personalizable (cámbialo desde aquí)
     mensajeFinal.innerHTML = '✨ 17 meses de magia ✨<br>Gracias por ser el amor de mi vida.<br>¡Te amo! 💖';
 }
 
@@ -307,21 +244,12 @@ function redimensionarCanvas() {
     canvas.width = ancho;
     canvas.height = alto;
     escala = ancho / ANCHO_REF;
-    
     pajaro.x = ancho * 0.2;
     pajaro.radio = 15;
 }
 
 window.addEventListener('resize', () => {
-    if (jugando) {
-        redimensionarCanvas();
-    }
+    if (jugando) redimensionarCanvas();
 });
 
-// ===================== SONIDOS (API Web Audio) =====================
-
-
-
-
-// Ajuste inicial
 redimensionarCanvas();
