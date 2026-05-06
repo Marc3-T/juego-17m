@@ -245,7 +245,7 @@ function ganarJuego() {
     });
     canvas.classList.add('oculto');
     ganaste.classList.remove('oculto');
-    mensajeFinal.innerHTML = 'Te amo con todo mi corazón amor de mi vida ❤️✨';
+    mensajeFinal.innerHTML = '';
 }
 
 // ===================== AJUSTE RESPONSIVE =====================
