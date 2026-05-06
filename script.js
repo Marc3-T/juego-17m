@@ -31,8 +31,8 @@ let pajaro = {
 // Obstáculos (columnas rosadas) - ESPACIO AUMENTADO UN 50%
 let obstaculos = [];
 const VELOCIDAD_BASE = 3.5;       // movimiento rápido
-const ESPACIO_VERTICAL = 800;     // antes 140 → +50% = 210
-const DISTANCIA_HORIZONTAL = 240; // distancia entre pares
+const ESPACIO_VERTICAL = 300;     // antes 140 → +50% = 210
+const DISTANCIA_HORIZONTAL = 280; // distancia entre pares
 
 let puntuacion = 0;
 let jugando = false;
