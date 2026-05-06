@@ -29,7 +29,7 @@ let pajaro = {
 
 let obstaculos = [];
 const VELOCIDAD_BASE = 3.5;
-const ESPACIO_VERTICAL = 210;
+const ESPACIO_VERTICAL = 210;      // hueco entre columnas
 const DISTANCIA_HORIZONTAL = 250;
 
 let puntuacion = 0;
@@ -84,11 +84,22 @@ function reiniciarValores() {
 function crearObstaculo() {
     const anchoColumna = 45 * escala;
     const espacio = ESPACIO_VERTICAL * escala;
-    const centroY = Math.random() * (alto - espacio - 80 * escala) + 40 * escala;
+    const margen = 20 * escala;                     // margen para que no esté pegado
+    const minCentroY = espacio / 2 + margen;
+    const maxCentroY = alto - espacio / 2 - margen;
+    const rango = Math.max(0, maxCentroY - minCentroY);
+    const centroY = minCentroY + Math.random() * rango;
+    
     obstaculos.push({
         x: ancho,
-        sup: { y: 0, alto: centroY - espacio/2 },
-        inf: { y: centroY + espacio/2, alto: alto - (centroY + espacio/2) },
+        sup: {
+            y: 0,
+            alto: centroY - espacio / 2          // siempre positivo
+        },
+        inf: {
+            y: centroY + espacio / 2,
+            alto: alto - (centroY + espacio / 2) // siempre positivo
+        },
         ancho: anchoColumna,
         pasada: false
     });
@@ -158,8 +169,8 @@ function dibujarTodo() {
         ctx.fill();
     }
     obstaculos.forEach(obs => {
-        dibujarColumna(obs.x, 0, obs.ancho, obs.sup.alto);
-        dibujarColumna(obs.x, alto - obs.inf.alto, obs.ancho, obs.inf.alto);
+        dibujarColumna(obs.x, 0, obs.ancho, obs.sup.alto);                // superior
+        dibujarColumna(obs.x, alto - obs.inf.alto, obs.ancho, obs.inf.alto); // inferior
     });
     const rotacion = Math.min(Math.max(pajaro.vy * 0.1, -0.5), 0.5);
     dibujarCorazon(pajaro.x, pajaro.y, pajaro.radio * escala, rotacion);
