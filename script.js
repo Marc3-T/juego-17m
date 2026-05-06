@@ -18,20 +18,20 @@ let ancho, alto;
 let escala;
 const ANCHO_REF = 375; // iPhone 6/7/8 lógico
 
-// Pájaro (corazón) - AJUSTES DE FÍSICA
+// Pájaro (corazón) - FÍSICA AJUSTADA
 let pajaro = {
     x: 0,
     y: 0,
     vy: 0,
     radio: 15,          // tamaño base
-    gravedad: 0.6,      // antes 0.5
-    salto: -5.5         // antes -7
+    gravedad: 0.6,      // caída ágil
+    salto: -5.5         // impulso de aleteo
 };
 
-// Obstáculos (nubes con "17") - VELOCIDAD Y ESPACIO
+// Obstáculos (columnas rosadas) - VELOCIDAD Y ESPACIO
 let obstaculos = [];
-const VELOCIDAD_BASE = 3.5;       // antes 2
-const ESPACIO_VERTICAL = 140;     // antes 130
+const VELOCIDAD_BASE = 3.5;       // movimiento rápido
+const ESPACIO_VERTICAL = 140;     // apertura entre columnas
 const DISTANCIA_HORIZONTAL = 250; // distancia entre pares
 
 let puntuacion = 0;
@@ -51,7 +51,7 @@ function dibujarCorazon(x, y, radio, rotacion = 0) {
     ctx.shadowBlur = 5;
     ctx.beginPath();
     // Corazón escalado
-    const s = radio / 15; // radio base de 15 píxeles coincide con el path del corazón
+    const s = radio / 15; // radio base de 15 píxeles
     ctx.moveTo(0, -5 * s);
     ctx.bezierCurveTo(-5 * s, -15 * s, -15 * s, -10 * s, 0, 5 * s);
     ctx.bezierCurveTo(15 * s, -10 * s, 5 * s, -15 * s, 0, -5 * s);
@@ -59,14 +59,15 @@ function dibujarCorazon(x, y, radio, rotacion = 0) {
     ctx.restore();
 }
 
-function dibujarNube(x, y, ancho, alto, texto = '17') {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.shadowColor = 'rgba(0,0,0,0.15)';
-    ctx.shadowBlur = 10;
+function dibujarColumna(x, y, ancho, alto) {
+    // Columna rosa con bordes suaves (sin número)
+    const radio = 10 * escala; // radio para esquinas redondeadas
+    ctx.fillStyle = '#ff8da1'; // rosa pastel
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 8;
     
-    // Rectángulo redondeado
-    const radio = 20 * escala;
     ctx.beginPath();
+    // Rectángulo redondeado
     ctx.moveTo(x + radio, y);
     ctx.lineTo(x + ancho - radio, y);
     ctx.quadraticCurveTo(x + ancho, y, x + ancho, y + radio);
@@ -79,13 +80,8 @@ function dibujarNube(x, y, ancho, alto, texto = '17') {
     ctx.closePath();
     ctx.fill();
     
-    // Texto "17"
+    // Sin texto del 17
     ctx.shadowBlur = 0;
-    ctx.fillStyle = '#b83b5e';
-    ctx.font = `bold ${14*escala}px "Pacifico", cursive`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(texto, x + ancho/2, y + alto/2);
 }
 
 // ===================== LÓGICA DE JUEGO =====================
@@ -97,33 +93,33 @@ function reiniciarValores() {
 }
 
 function crearObstaculo() {
-    const anchoNube = 50 * escala;
+    const anchoColumna = 45 * escala; // un poco más finas que antes
     const espacio = ESPACIO_VERTICAL * escala;
     
     // Posición vertical aleatoria del centro del espacio
-    const centroY = Math.random() * (alto - espacio - 100 * escala) + 50 * escala;
+    const centroY = Math.random() * (alto - espacio - 80 * escala) + 40 * escala;
     
     obstaculos.push({
         x: ancho,
         sup: {
             y: 0,
-            alto: centroY - espacio/2
+            alto: centroY - espacio/2   // columna superior
         },
         inf: {
             y: centroY + espacio/2,
-            alto: alto - (centroY + espacio/2)
+            alto: alto - (centroY + espacio/2) // columna inferior
         },
-        ancho: anchoNube,
+        ancho: anchoColumna,
         pasada: false
     });
 }
 
 function actualizar() {
-    // Física del pájaro (CORREGIDO: sin *0.1 extra)
+    // Física del pájaro
     pajaro.vy += pajaro.gravedad * escala;
     pajaro.y += pajaro.vy;
     
-    // Limitar caída (si toca el suelo o el techo)
+    // Límites verticales (suelo y techo)
     if (pajaro.y + pajaro.radio * escala > alto) {
         pajaro.y = alto - pajaro.radio * escala;
         gameOver();
@@ -139,7 +135,7 @@ function actualizar() {
         const obs = obstaculos[i];
         obs.x -= VELOCIDAD_BASE * escala;
         
-        // Eliminar obstáculos que salieron de la pantalla
+        // Eliminar los que salen de la pantalla
         if (obs.x + obs.ancho < 0) {
             obstaculos.splice(i, 1);
             continue;
@@ -158,14 +154,14 @@ function actualizar() {
             }
         }
         
-        // Colisión con nube superior o inferior
+        // Colisión con las columnas
         if (hayColision(obs)) {
             gameOver();
             return;
         }
     }
     
-    // Crear nuevos obstáculos
+    // Generar nuevos obstáculos
     if (obstaculos.length === 0 || obstaculos[obstaculos.length-1].x < ancho - DISTANCIA_HORIZONTAL * escala) {
         crearObstaculo();
     }
@@ -174,13 +170,15 @@ function actualizar() {
 function hayColision(obs) {
     const pjarox = pajaro.x;
     const pjaroy = pajaro.y;
-    const radio = pajaro.radio * escala * 0.75;
+    const radio = pajaro.radio * escala * 0.75; // margen de colisión generoso
     
-    // Colisión con nube superior
+    // El pájaro está dentro del rango horizontal de la columna
     if (pjarox + radio > obs.x && pjarox - radio < obs.x + obs.ancho) {
+        // Colisión con columna superior
         if (pjaroy - radio < obs.sup.alto) {
             return true;
         }
+        // Colisión con columna inferior
         if (pjaroy + radio > alto - obs.inf.alto) {
             return true;
         }
@@ -191,24 +189,22 @@ function hayColision(obs) {
 function dibujarTodo() {
     ctx.clearRect(0, 0, ancho, alto);
     
-    // Fondo con nubes decorativas estáticas
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    // Nubes decorativas de fondo (opcionales)
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
     for (let i = 0; i < 5; i++) {
         ctx.beginPath();
-        ctx.arc(i*100*escala + 30*escala, 50*escala, 30*escala, 0, Math.PI*2);
-        ctx.arc(i*100*escala + 60*escala, 40*escala, 25*escala, 0, Math.PI*2);
+        ctx.arc(i * 100 * escala + 30 * escala, 50 * escala, 25 * escala, 0, Math.PI*2);
+        ctx.arc(i * 100 * escala + 60 * escala, 40 * escala, 20 * escala, 0, Math.PI*2);
         ctx.fill();
     }
     
-    // Dibujar obstáculos
+    // Dibujar columnas rosadas
     obstaculos.forEach(obs => {
-        // Nube superior (parte visible desde arriba hasta la abertura)
-        dibujarNube(obs.x, 0, obs.ancho, obs.sup.alto, '17');
-        // Nube inferior
-        dibujarNube(obs.x, alto - obs.inf.alto, obs.ancho, obs.inf.alto, '17');
+        dibujarColumna(obs.x, 0, obs.ancho, obs.sup.alto);                // superior
+        dibujarColumna(obs.x, alto - obs.inf.alto, obs.ancho, obs.inf.alto); // inferior
     });
     
-    // Rotación del corazón basada en velocidad vertical
+    // Rotación del corazón según velocidad vertical
     const rotacion = Math.min(Math.max(pajaro.vy * 0.1, -0.5), 0.5);
     dibujarCorazon(pajaro.x, pajaro.y, pajaro.radio * escala, rotacion);
     
@@ -319,7 +315,7 @@ function redimensionarCanvas() {
     escala = ancho / ANCHO_REF;
     
     pajaro.x = ancho * 0.2;
-    pajaro.radio = 15; // base
+    pajaro.radio = 15;
 }
 
 window.addEventListener('resize', () => {
