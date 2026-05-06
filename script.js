@@ -234,7 +234,7 @@ function ganarJuego() {
     });
     canvas.classList.add('oculto');
     ganaste.classList.remove('oculto');
-    mensajeFinal.innerHTML = '✨ 17 meses de magia ✨<br>Gracias por ser el amor de mi vida.<br>¡Te amo! 💖';
+    mensajeFinal.innerHTML = '';
 }
 
 // ===================== AJUSTE RESPONSIVE =====================
