@@ -39,7 +39,7 @@ let jugando = false;
 let animacionId = null;
 
 // Control de audio
-let audioCtx = null;
+
 
 // ===================== FUNCIONES DE DIBUJO =====================
 function dibujarCorazon(x, y, radio, rotacion = 0) {
@@ -145,7 +145,7 @@ function actualizar() {
         if (!obs.pasada && obs.x + obs.ancho < pajaro.x) {
             obs.pasada = true;
             puntuacion++;
-            if (typeof sonidoPunto === 'function') sonidoPunto();
+            
             
             // ¿Ganó?
             if (puntuacion >= 17) {
@@ -230,7 +230,7 @@ function loop() {
 function saltar() {
     if (!jugando) return;
     pajaro.vy = pajaro.salto * escala;
-    if (typeof sonidoAleteo === 'function') sonidoAleteo();
+    
 }
 
 // Eventos táctiles y de ratón
@@ -254,13 +254,7 @@ function iniciarJuego() {
     canvas.classList.remove('oculto');
     
     // Activar contexto de audio con interacción
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        crearSonidos();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
+    
     
     redimensionarCanvas();
     reiniciarValores();
@@ -282,7 +276,7 @@ function reiniciarJuego() {
 function gameOver() {
     jugando = false;
     cancelAnimationFrame(animacionId);
-    if (typeof sonidoChoque === 'function') sonidoChoque();
+    
     
     canvas.classList.add('oculto');
     perdiste.classList.remove('oculto');
@@ -325,49 +319,9 @@ window.addEventListener('resize', () => {
 });
 
 // ===================== SONIDOS (API Web Audio) =====================
-let sonidoAleteo, sonidoPunto, sonidoChoque;
 
-function crearSonidos() {
-    // Aleteo: tono agudo corto
-    sonidoAleteo = () => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.05);
-    };
-    
-    // Punto: "ding" agradable
-    sonidoPunto = () => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.3);
-    };
-    
-    // Choque: ruido bajo
-    sonidoChoque = () => {
-        const bufferSize = audioCtx.sampleRate * 0.2;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * 0.2;
-        }
-        const source = audioCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioCtx.destination);
-        source.start();
-    };
-}
+
+
 
 // Ajuste inicial
 redimensionarCanvas();
