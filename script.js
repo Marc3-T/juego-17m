@@ -18,20 +18,20 @@ let ancho, alto;
 let escala;
 const ANCHO_REF = 375; // iPhone 6/7/8 lógico
 
-// Pájaro (corazón)
+// Pájaro (corazón) - AJUSTES DE FÍSICA
 let pajaro = {
     x: 0,
     y: 0,
     vy: 0,
-    radio: 15, // tamaño base
-    gravedad: 0.5,
-    salto: -7
+    radio: 15,          // tamaño base
+    gravedad: 0.6,      // antes 0.5
+    salto: -5.5         // antes -7
 };
 
-// Obstáculos (nubes con "17")
+// Obstáculos (nubes con "17") - VELOCIDAD Y ESPACIO
 let obstaculos = [];
-const VELOCIDAD_BASE = 2;
-const ESPACIO_VERTICAL = 130; // apertura entre nubes
+const VELOCIDAD_BASE = 3.5;       // antes 2
+const ESPACIO_VERTICAL = 140;     // antes 130
 const DISTANCIA_HORIZONTAL = 250; // distancia entre pares
 
 let puntuacion = 0;
@@ -98,7 +98,6 @@ function reiniciarValores() {
 
 function crearObstaculo() {
     const anchoNube = 50 * escala;
-    const altoNube = 250 * escala; // Alto total de cada nube individual (se recortará con la posición)
     const espacio = ESPACIO_VERTICAL * escala;
     
     // Posición vertical aleatoria del centro del espacio
@@ -106,12 +105,10 @@ function crearObstaculo() {
     
     obstaculos.push({
         x: ancho,
-        // Nube superior
         sup: {
             y: 0,
             alto: centroY - espacio/2
         },
-        // Nube inferior
         inf: {
             y: centroY + espacio/2,
             alto: alto - (centroY + espacio/2)
@@ -122,14 +119,15 @@ function crearObstaculo() {
 }
 
 function actualizar() {
-    // Física del pájaro
-    pajaro.vy += pajaro.gravedad * escala * 0.1;
+    // Física del pájaro (CORREGIDO: sin *0.1 extra)
+    pajaro.vy += pajaro.gravedad * escala;
     pajaro.y += pajaro.vy;
     
     // Limitar caída (si toca el suelo o el techo)
     if (pajaro.y + pajaro.radio * escala > alto) {
         pajaro.y = alto - pajaro.radio * escala;
         gameOver();
+        return;
     }
     if (pajaro.y - pajaro.radio * escala < 0) {
         pajaro.y = pajaro.radio * escala;
@@ -161,7 +159,7 @@ function actualizar() {
         }
         
         // Colisión con nube superior o inferior
-        if (colisiona(pajaro, obs.sup, obs.ancho, 'sup') || colisiona(pajaro, obs.inf, obs.ancho, 'inf')) {
+        if (hayColision(obs)) {
             gameOver();
             return;
         }
@@ -173,23 +171,6 @@ function actualizar() {
     }
 }
 
-function colisiona(paj, parteObs, anchoObs, tipo) {
-    // parteObs: { y, alto }
-    const pajIzq = paj.x - paj.radio * escala * 0.8;
-    const pajDer = paj.x + paj.radio * escala * 0.8;
-    const pajArriba = paj.y - paj.radio * escala * 0.8;
-    const pajAbajo = paj.y + paj.radio * escala * 0.8;
-    
-    const obsIzq = parteObs.x || 0; // deberíamos almacenar x en la parte
-    // Vamos a arreglarlo: necesitamos pasar el objeto obstáculo completo para tener x.
-    // Modificamos llamada para enviar el obstáculo entero y la parte.
-    // Haremos una pequeña reestructuración rápida.
-    // En lugar de lo anterior, usaremos otra función.
-    // (Abajo se resuelve)
-    return false;
-}
-
-// Rehacemos la detección de colisión de manera más limpia
 function hayColision(obs) {
     const pjarox = pajaro.x;
     const pjaroy = pajaro.y;
@@ -214,8 +195,8 @@ function dibujarTodo() {
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     for (let i = 0; i < 5; i++) {
         ctx.beginPath();
-        ctx.arc(i*100*escala + 30, 50*escala, 30*escala, 0, Math.PI*2);
-        ctx.arc(i*100*escala + 60, 40*escala, 25*escala, 0, Math.PI*2);
+        ctx.arc(i*100*escala + 30*escala, 50*escala, 30*escala, 0, Math.PI*2);
+        ctx.arc(i*100*escala + 60*escala, 40*escala, 25*escala, 0, Math.PI*2);
         ctx.fill();
     }
     
