@@ -28,10 +28,10 @@ let pajaro = {
     salto: -5.5         // impulso de aleteo
 };
 
-// Obstáculos (columnas rosadas) - VELOCIDAD Y ESPACIO
+// Obstáculos (columnas rosadas) - ESPACIO AUMENTADO UN 50%
 let obstaculos = [];
 const VELOCIDAD_BASE = 3.5;       // movimiento rápido
-const ESPACIO_VERTICAL = 140;     // apertura entre columnas
+const ESPACIO_VERTICAL = 210;     // antes 140 → +50% = 210
 const DISTANCIA_HORIZONTAL = 250; // distancia entre pares
 
 let puntuacion = 0;
@@ -93,7 +93,7 @@ function reiniciarValores() {
 }
 
 function crearObstaculo() {
-    const anchoColumna = 45 * escala; // un poco más finas que antes
+    const anchoColumna = 45 * escala;
     const espacio = ESPACIO_VERTICAL * escala;
     
     // Posición vertical aleatoria del centro del espacio
